@@ -1,77 +1,64 @@
-import { Component } from "react";
-import withStyles from "@material-ui/core/styles/withStyles";
-import PropTypes from "prop-types";
-import redzzaIcon from "../images/redzza.png";
-import axios from "axios";
-import { Link } from "react-router-dom";
-//Mui
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import React, { Component } from 'react';
+import withStyles from '@material-ui/core/styles/withStyles';
+import PropTypes from 'prop-types';
+import Redzza from '../images/redzza.png';
+import { Link } from 'react-router-dom';
+
+// MUI Stuff
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
+// Redux stuff
+import { connect } from 'react-redux';
+import { loginUser } from '../redux/actions/userActions';
 
 const styles = (theme) => ({
   ...theme.spreadThis
 });
 
 class login extends Component {
-  // Manejo del Form del login - Control Component using the state
   constructor() {
     super();
     this.state = {
-      email: "",
-      password: "",
-      loading: false,
-      errors: {},
+      email: '',
+      password: '',
+      errors: {}
     };
   }
-
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.UI.errors) {
+      this.setState({ errors: nextProps.UI.errors });
+    }
+  }
   handleSubmit = (event) => {
-    // Prevenimos en comportamiento por Default que muestra la contraseña en la Url del Navegador y demás
     event.preventDefault();
-    this.setState({
-      loading: true,
-    });
-    // Creamos la constante de la Data del usuario
-    // Traemos el backend con el metodo Post del login (Api que creé/login)
     const userData = {
       email: this.state.email,
-      password: this.state.password,
+      password: this.state.password
     };
-    axios
-      .post("/login", userData)
-      .then((res) => {
-        console.log(res.data);
-        localStorage.setItem("FBIdToken", `Bearer ${res.data.token}`);
-        this.setState({
-          loading: false,
-        });
-        // Este es el path para enviar al home luego del logueo
-        this.props.history.push("/");
-      })
-      .catch((err) => {
-        this.setState({
-          errors: err.response.data,
-          loading: false,
-        });
-      });
+    this.props.loginUser(userData, this.props.history);
   };
   handleChange = (event) => {
     this.setState({
-      [event.target.name]: event.target.value,
+      [event.target.name]: event.target.value
     });
   };
   render() {
-    const { classes } = this.props;
-    const { errors, loading } = this.state;
+    const {
+      classes,
+      UI: { loading }
+    } = this.props;
+    const { errors } = this.state;
+
     return (
       <Grid container className={classes.form}>
         <Grid item sm />
         <Grid item sm>
-          <img src={redzzaIcon} alt="redzza" className={classes.image} />
+          <img src={Redzza} alt="redzza" className={classes.image} />
           <Typography variant="h2" className={classes.pageTitle}>
-            Ingresar
+            Login
           </Typography>
           <form noValidate onSubmit={this.handleSubmit}>
             <TextField
@@ -105,17 +92,20 @@ class login extends Component {
             )}
             <Button
               type="submit"
-              variant="contain"
+              variant="contained"
               color="primary"
               className={classes.button}
               disabled={loading}
             >
-              Ingresar{loading && (
-                <CircularProgress size={30} className={classes.progress}/>
+              Login
+              {loading && (
+                <CircularProgress size={30} className={classes.progress} />
               )}
             </Button>
-             <br />
-            <small>No tienes una Cuenta? Crea una <Link to="/signup">Aquí</Link></small>
+            <br />
+            <small>
+              dont have an account ? sign up <Link to="/signup">here</Link>
+            </small>
           </form>
         </Grid>
         <Grid item sm />
@@ -126,6 +116,21 @@ class login extends Component {
 
 login.propTypes = {
   classes: PropTypes.object.isRequired,
+  loginUser: PropTypes.func.isRequired,
+  user: PropTypes.object.isRequired,
+  UI: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(login);
+const mapStateToProps = (state) => ({
+  user: state.user,
+  UI: state.UI
+});
+
+const mapActionsToProps = {
+  loginUser
+};
+
+export default connect(
+  mapStateToProps,
+  mapActionsToProps
+)(withStyles(styles)(login));
